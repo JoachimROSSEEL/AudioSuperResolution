@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 
-def dir_to_spectro(src,dst):
+def dir_to_spectro(src,dst, spectrogram_dimensions=(64, 64),  cmap='gray_r'):
     # create folder for png files
     if not os.path.exists(dst):
         os.makedirs(dst)
@@ -39,9 +39,12 @@ def dir_to_spectro(src,dst):
         #imgpil.convert('RGB').save(png_file,"PNG")
       
         fig = plt.Figure()
+        fig.set_size_inches((spectrogram_dimensions[0]/fig.get_dpi(), spectrogram_dimensions[1]/fig.get_dpi()))
         canvas = FigureCanvas(fig)
-        ax = fig.add_subplot(111)
-        p = librosa.display.specshow(Zxx, ax=ax, y_axis='log', x_axis='time')
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        p = librosa.display.specshow(Zxx, ax=ax, y_axis='log', x_axis='time',cmap=cmap)
         fig.savefig(png_file)
     return
        
