@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#reprise du code de preprocessing data de audioMnist
-
+#reprise d'une partie code de preprocessing data de audioMnist
+#those functions allows to create and to do some manipulation with spectrograms
 import numpy as np
 import glob
 import os
@@ -47,4 +47,60 @@ def dir_to_spectro(src,dst, spectrogram_dimensions=(64, 64),  cmap='gray_r'):
         p = librosa.display.specshow(Zxx, ax=ax, y_axis='log', x_axis='time',cmap=cmap)
         fig.savefig(png_file)
     return
-       
+
+#this functions calculates stores all the real and imaginary part of a folder containing wav file in two separates arrays which will later be feed to the autoencoder. 
+#the arrays contained in Spec_l will be of the following format: [Spec_real,Spec_imag] with Spec_real of shape (1025,12) for the moment
+def dir_to_spectro_RI(src):
+    Spec_l=[]
+#     Spec_real_l=[]
+#     Spec_imag_l=[]
+    zero_pad=8000
+    print("processing {}".format(src))
+    for filepath in sorted(glob.glob(os.path.join(src, "*.wav"))):
+        data, fs =librosa.load(filepath)
+        # resample , shannon still okay
+        data = librosa.core.resample(y=data.astype(np.float32), orig_sr=fs, target_sr=8000, res_type="scipy")
+        #zero_padding, in order to avoid bug and to have the same shape for all data in lenght time
+        if len(data) > zero_pad: #ok si durée d'une seconde
+            print(filepath)
+            
+            embedded_data=data[0:zero_pad]
+        elif len(data) < zero_pad:
+            embedded_data = np.zeros(zero_pad)
+            
+            embedded_data[0:len(data)] = data
+            
+        elif len(data) == zero_pad:
+            # nothing to do here
+            embedded_data = data
+            pass
+
+        Spec= librosa.stft(embedded_data, n_fft=2048,window='hann')
+#         Spec_real_l.append(np.real(Spec)/(np.real(Spec).max()))
+#         Spec_imag_l.append(np.imag(Spec)/(np.imag(Spec).max()))
+        Ntab=np.reshape([np.real(Spec)/(np.real(Spec).max()),np.imag(Spec)/(np.imag(Spec).max())],(1025,16,2)) #on normalise les valeurs pour que tout soit entre 0 et 1
+        
+        Spec_l.append(Ntab)
+        
+        
+#     Spec_real=np.asarray(Spec_real_l)
+#     Spec_imag=np.asarray(Spec_imag_l)
+    Spec_t=np.asarray(Spec_l)
+    return Spec_t
+#create png file to represent the complex in the C space       
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
