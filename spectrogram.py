@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#reprise d'une partie code de preprocessing data de audioMnist
+#part of the code of preprocessing data de audioMnist
 #those functions allows to create and to do some manipulation with spectrograms
 import numpy as np
 import glob
@@ -13,7 +13,7 @@ import argparse
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-
+#this functions stores the magnitude spectrogram as a png file. They have a log frequency scale and a log ampltude
 def dir_to_spectro(src,dst, spectrogram_dimensions=(64, 64),  cmap='gray_r'):
     # create folder for png files
     if not os.path.exists(dst):
@@ -48,14 +48,16 @@ def dir_to_spectro(src,dst, spectrogram_dimensions=(64, 64),  cmap='gray_r'):
         fig.savefig(png_file)
     return
 
+
+
 #this functions calculates stores all the real and imaginary part of a folder containing wav file in two separates arrays which will later be feed to the autoencoder. 
-#the arrays contained in Spec_l will be of the following format: [Spec_real,Spec_imag] with Spec_real of shape (1025,12) for the moment
+#the arrays contained in Spec_l will be of the following format:  (1024,16,2) for the moment, and lr_max, li_max containes the max uses for normalization of the spectrograms so you can remultpiply by it after the learning to restore the correct amplitude
+
 def dir_to_spectro_RI(src):
     Spec_l=[]
     lr_max=[]
     li_max=[]
-#     Spec_real_l=[]
-#     Spec_imag_l=[]
+
     zero_pad=8000
     print("processing {}".format(src))
     for filepath in sorted(glob.glob(os.path.join(src, "*.wav"))):
@@ -63,7 +65,7 @@ def dir_to_spectro_RI(src):
         # resample , shannon still okay
         data = librosa.core.resample(y=data.astype(np.float32), orig_sr=fs, target_sr=8000, res_type="scipy")
         #zero_padding, in order to avoid bug and to have the same shape for all data in lenght time
-        if len(data) > zero_pad: #ok si durée d'une seconde
+        if len(data) > zero_pad: #our data here last 1 second maximun 
             print(filepath)
             
             embedded_data=data[0:zero_pad]
@@ -84,81 +86,26 @@ def dir_to_spectro_RI(src):
         Specr=np.real(Spec)/(np.real(Spec).max())
         Speci=np.imag(Spec)/(np.imag(Spec).max())
         
-        image_ri = np.zeros((1024, 16, 2)) #on enleve la plus haute frequence pour avoir une puissance de 2 , résolution de 4Hz
+        image_ri = np.zeros((1024, 16, 2)) #we remove the higher frequency to have 1024 as a dimension so a power of two , resolution of 4Hz between two indices
         for i in range(1024):
             for j in range(16):
                 image_ri[i][j][0]=Specr[i][j]
                 image_ri[i][j][1]=Speci[i][j]
-                #comme un pixel contenant la partie reelle et imaginaire en guise de couleur
+                #as a pixel containing the real and imaginary part, same way of a color
                 j=j+1   
             i=i+1    
                    
-#         Spec_real_l.append(np.real(Spec)/(np.real(Spec).max()))
-#         Spec_imag_l.append(np.imag(Spec)/(np.imag(Spec).max()))
-        #Ntab=np.reshape([np.real(Spec)/(np.real(Spec).max()),np.imag(Spec)/(np.imag(Spec).max())],(1025,16,2)) #on normalise les valeurs pour que tout soit entre 0 et 1
-        
-        Spec_l.append(image_ri)
-        
-        
-#     Spec_real=np.asarray(Spec_real_l)
-#     Spec_imag=np.asarray(Spec_imag_l)
-    Spec_t=np.asarray(Spec_l)
-    return Spec_t,lr_max,li_max
-def dir_to_spectro_RI(src):
-    Spec_l=[]
-    lr_max=[]
-    li_max=[]
-#     Spec_real_l=[]
-#     Spec_imag_l=[]
-    zero_pad=8000
-    print("processing {}".format(src))
-    for filepath in sorted(glob.glob(os.path.join(src, "*.wav"))):
-        data, fs =librosa.load(filepath)
-        # resample , shannon still okay
-        data = librosa.core.resample(y=data.astype(np.float32), orig_sr=fs, target_sr=8000, res_type="scipy")
-        #zero_padding, in order to avoid bug and to have the same shape for all data in lenght time
-        if len(data) > zero_pad: #ok si durée d'une seconde
-            print(filepath)
-            
-            embedded_data=data[0:zero_pad]
-        elif len(data) < zero_pad:
-            embedded_data = np.zeros(zero_pad)
-            
-            embedded_data[0:len(data)] = data
-            
-        elif len(data) == zero_pad:
-            # nothing to do here
-            embedded_data = data
-            pass
 
-        Spec= librosa.stft(embedded_data, n_fft=2048,window='hann')
-        
-        lr_max.append(np.real(Spec).max())
-        li_max.append(np.imag(Spec).max())
-        Specr=np.real(Spec)/(np.real(Spec).max())
-        Speci=np.imag(Spec)/(np.imag(Spec).max())
-        
-        image_ri = np.zeros((1024, 16, 2)) #on enleve la plus haute frequence pour avoir une puissance de 2 , résolution de 4Hz
-        for i in range(1024):
-            for j in range(16):
-                image_ri[i][j][0]=Specr[i][j]
-                image_ri[i][j][1]=Speci[i][j]
-                #comme un pixel contenant la partie reelle et imaginaire en guise de couleur
-                j=j+1   
-            i=i+1    
-                   
-#         Spec_real_l.append(np.real(Spec)/(np.real(Spec).max()))
-#         Spec_imag_l.append(np.imag(Spec)/(np.imag(Spec).max()))
-        #Ntab=np.reshape([np.real(Spec)/(np.real(Spec).max()),np.imag(Spec)/(np.imag(Spec).max())],(1025,16,2)) #on normalise les valeurs pour que tout soit entre 0 et 1
         
         Spec_l.append(image_ri)
         
-        
-#     Spec_real=np.asarray(Spec_real_l)
-#     Spec_imag=np.asarray(Spec_imag_l)
+      
     Spec_t=np.asarray(Spec_l)
     return Spec_t,lr_max,li_max   
 
+#this functions stores all the wav_file of a src folder into a array containing their mel spectrogram
+#It also calculate and return their phase for the moment
+#Why mel? mel is similar to a log scale ,so it assures that the low frequency information is as represented as the high frequency
 def dir_to_log_mel(src):
     Spec_l=[]
     Phase_l=[]
@@ -169,7 +116,7 @@ def dir_to_log_mel(src):
         # resample , shannon still okay
         data = librosa.core.resample(y=data.astype(np.float32), orig_sr=fs, target_sr=8000, res_type="scipy")
         #zero_padding, in order to avoid bug and to have the same shape for all data in lenght time
-        if len(data) > zero_pad: #ok si durée d'une seconde
+        if len(data) > zero_pad: #our data here last 1 second maximun 
             print(filepath)
             
             embedded_data=data[0:zero_pad]
@@ -186,26 +133,26 @@ def dir_to_log_mel(src):
         Spec= librosa.feature.melspectrogram(S=Stft, sr=8000, n_fft=2048, hop_length=512, power=2.0,n_mels=1024,norm=None)
         Mag,Phase=librosa.core.magphase(Stft, power=1)
         Phase_l.append(Phase[0:Phase.shape[0]-1,:])
-        #mel est quasi comme echelle log, assure que l'information basse fréquence est autant représentée que la haute fréquence
+       
         Spec=np.log(abs(Spec)+1)
-        #ampli log pour meilleure apprentissage du reseau de neurones
+        #log amp for better learning of the neural network
         #+1 to avoid log(0.0)
         
         Spec_l.append(np.reshape(Spec,(Spec.shape[0],Spec.shape[1],1))) 
         
-    return np.asarray(Spec_l),np.asarray(Phase_l) #on retourne le mel_spec (donc amplitude) et la phase
+    return np.asarray(Spec_l),np.asarray(Phase_l) 
         
-# self.inverse_mel_filterbank[np.newaxis, np.newaxis, ...] @ features: pour remettre mel spectro en magnitude normale
-# @ signifie multi entre matrice => code de https://github.com/4p0pt0Z/Audio_blind_source_separation/blob/master/data_set.py
+
+# inspired by the of code at https://github.com/4p0pt0Z/Audio_blind_source_separation/blob/master/data_set.py
 #mel_filterbank => cf https://librosa.github.io/librosa/generated/librosa.filters.mel.html
 #fct à utiliser: librosa.filters.mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False, norm=1)         
-#Mel_t est le tableau ayant pour element i un spectrogram => tableau 3D
-#reste des arguments sont ceux de la fct librosa.filters.mel
+#Mel_t is an array which  le tableau having for element i a spectrogram of shape (1024,16,1) 
+#rest of arguments are those of the fct librosa.filters.mel
 
 def mel_to_linspec(Mel_t,sr,n_mels,n_fft,fmin=0.0,fmax=None):
     Spec_t=np.zeros((Mel_t.shape[0],Mel_t.shape[1],Mel_t.shape[2]),dtype=complex)
-    mel_filter=librosa.filters.mel(sr,n_fft,n_mels,fmin,fmax,norm=None) #matrice de passage spec lineaire vers mel_spec
-    inverse_mel_filter= np.linalg.pinv(mel_filter) #on inverse la matrice de passage pour passer de mel_spec vers spec lineaire
+    mel_filter=librosa.filters.mel(sr,n_fft,n_mels,fmin,fmax,norm=None) #matrix of passage to go from linear spec to mel spec
+    inverse_mel_filter= np.linalg.pinv(mel_filter) #we reverse the matrix of passage to go from mel_spec to linear spec
     
     for i in range(len(Mel_t)):
         Mel_t[i] = np.power(10.0 * np.ones(Mel_t[i].shape), (Mel_t[i] / 10.0)) - 1.0 #-1 because of the way it's calculates in dir_to_log_mel
