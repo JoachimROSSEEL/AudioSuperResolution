@@ -150,14 +150,14 @@ def dir_to_log_mel(src):
 #rest of arguments are those of the fct librosa.filters.mel
 
 def mel_to_linspec(Mel_t,sr,n_mels,n_fft,fmin=0.0,fmax=None):
-    Spec_t=np.zeros((Mel_t.shape[0],Mel_t.shape[1],Mel_t.shape[2]),dtype=complex)
+    Spec_t=np.zeros((Mel_t.shape[0],Mel_t.shape[1],Mel_t.shape[2]))
     mel_filter=librosa.filters.mel(sr,n_fft,n_mels,fmin,fmax,norm=None) #matrix of passage to go from linear spec to mel spec
     inverse_mel_filter= np.linalg.pinv(mel_filter) #we reverse the matrix of passage to go from mel_spec to linear spec
-    
+    Mel=np.copy(Mel_t) #to avoid making some changes the input Mel_t
     for i in range(len(Mel_t)):
-        Mel_t[i] = np.power(10.0 * np.ones(Mel_t[i].shape), (Mel_t[i] / 10.0)) - 1.0 #-1 because of the way it's calculates in dir_to_log_mel
+        Mel[i] = np.power(10.0 * np.ones(Mel[i].shape), (Mel[i] / 10.0)) - 1.0 #-1 because of the way it's calculates in dir_to_log_mel
         
-        Spec_t[i]=inverse_mel_filter[0:inverse_mel_filter.shape[0]-1,:] @ np.reshape(Mel_t[i],(Mel_t[i].shape[0],Mel_t[i].shape[1]))
+        Spec_t[i]=inverse_mel_filter[0:inverse_mel_filter.shape[0]-1,:] @ np.reshape(Mel[i],(Mel[i].shape[0],Mel[i].shape[1]))
         
     return Spec_t
         
