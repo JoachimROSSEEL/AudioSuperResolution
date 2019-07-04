@@ -29,8 +29,38 @@ def dir_to_wav_array(src):
             # nothing to do here
             embedded_data = data
             pass
+        
         max_l.append(embedded_data.max())
-        normalized_data=embedded_data 
-        wav_l.append(np.reshape(embedded_data,(zero_pad,1,1)))
+        normalized_data=embedded_data/embedded_data.max() 
+        wav_l.append(np.reshape(normalized_data,(zero_pad,1,1)))
           
     return np.asarray(wav_l),np.asarray(max_l)
+
+#this functions calculates an audio signal by taking Spec_t[i], a spectrgram of shape (1024,16) and multiplying it by the phase of the stft of audio[i]
+#Then,after an istft it returns an array of audio data with a merge phase and magnitude
+def merge_specphase_to_audio(Spec_t,audio):
+    lenght=len(Spec_t)
+    merge_audio=np.zeros((audio.shape[0],audio.shape[1]))
+    
+    if(lenght!=len(audio)):
+        raise ValueError("the two arrays must have the same lenght")
+    for i in range(lenght):
+        Audio_stft=librosa.stft(np.reshape(audio[i],(audio.shape[1])), n_fft=2048,window='hann')
+        Mag,Phase=librosa.magphase(Audio_stft,2)
+        Mix_stft=Spec_t[i]*Phase[0:1024,:] 
+        Audio=np.concatenate((Mix_stft,np.zeros((1,16),dtype=complex)),axis=0)  #to have shape 1025,16
+        data=np.asarray(librosa.istft(Audio,length=8000))
+        merge_audio[i]=data
+        i=i+1
+    return merge_audio
+        
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
