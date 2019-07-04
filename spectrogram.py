@@ -134,7 +134,7 @@ def dir_to_log_mel(src):
         Mag,Phase=librosa.core.magphase(Stft, power=1)
         Phase_l.append(Phase[0:Phase.shape[0]-1,:])
        
-        Spec=np.log(abs(Spec)+1)
+        Spec=np.log10(abs(Spec)+1)
         #log amp for better learning of the neural network
         #+1 to avoid log(0.0)
         
@@ -155,14 +155,47 @@ def mel_to_linspec(Mel_t,sr,n_mels,n_fft,fmin=0.0,fmax=None):
     inverse_mel_filter= np.linalg.pinv(mel_filter) #we reverse the matrix of passage to go from mel_spec to linear spec
     Mel=np.copy(Mel_t) #to avoid making some changes the input Mel_t
     for i in range(len(Mel_t)):
-        Mel[i] = np.power(10.0 * np.ones(Mel[i].shape), (Mel[i] / 10.0)) - 1.0 #-1 because of the way it's calculates in dir_to_log_mel
+        Mel[i] = np.power(10* np.ones(Mel[i].shape), Mel[i] ) - 1.0 #-1 because of the way it's calculates in dir_to_log_mel
         
         Spec_t[i]=inverse_mel_filter[0:inverse_mel_filter.shape[0]-1,:] @ np.reshape(Mel[i],(Mel[i].shape[0],Mel[i].shape[1]))
-        
+        i=i+1
     return Spec_t
         
         
+def audioarray_to_melspectro(audio_t): 
+    Spec_l=[]
+    
+    zero_pad=8000
+   
+    for i in range(len(audio_t)):
+        data=np.reshape(audio_t[i],(audio_t.shape[1]))
         
+        #zero_padding, in order to avoid bug and to have the same shape for all data in lenght time
+        if len(data) > zero_pad: #our data here last 1 second maximun 
+            
+            
+            embedded_data=data[0:zero_pad]
+        elif len(data) < zero_pad:
+            embedded_data = np.zeros(zero_pad)
+            
+            embedded_data[0:len(data)] = data
+            
+        elif len(data) == zero_pad:
+            # nothing to do here
+            embedded_data = data
+            pass
+        Stft=librosa.stft(embedded_data, n_fft=2048,window='hann')
+        Spec= librosa.feature.melspectrogram(S=Stft, sr=8000, n_fft=2048, hop_length=512, power=2.0,n_mels=1024,norm=None)
+        
+        
+       
+        Spec=np.log10(abs(Spec)+1)
+        #log amp for better learning of the neural network
+        #+1 to avoid log(0.0)
+        
+        Spec_l.append(np.reshape(Spec,(Spec.shape[0],Spec.shape[1],1))) 
+        
+    return np.asarray(Spec_l)        
         
         
         
