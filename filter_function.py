@@ -24,7 +24,7 @@ def creer_filter(fce,btype,ftype,ordre,*rs, **rp):
 #x is a 1D array, generally the wav file converted into an array. This functions return the filtered signal.    
 def filtrage(b,a,x):
     
-    return scipy.signal.lfilter(b, a, x)
+    return scipy.signal.filtfilt(b, a, x)
 
 
 
