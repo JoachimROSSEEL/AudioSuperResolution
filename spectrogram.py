@@ -145,7 +145,7 @@ def dir_to_log_mel(src):
 
 # inspired by the of code at https://github.com/4p0pt0Z/Audio_blind_source_separation/blob/master/data_set.py
 #mel_filterbank => cf https://librosa.github.io/librosa/generated/librosa.filters.mel.html
-#fct à utiliser: librosa.filters.mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False, norm=1)         
+       
 #Mel_t is an array which  le tableau having for element i a spectrogram of shape (1024,16,1) 
 #rest of arguments are those of the fct librosa.filters.mel
 
@@ -197,7 +197,43 @@ def audioarray_to_melspectro(audio_t):
         
     return np.asarray(Spec_l)        
         
+def dir_to_log_mag_spec(src):
+    Spec_l=[]
+    Phase_l=[]
+    
+    zero_pad=8000
+    print("processing {}".format(src))
+    for filepath in sorted(glob.glob(os.path.join(src, "*.wav"))):
+        data, fs =librosa.load(filepath)
+        # resample , shannon still okay
+        data = librosa.core.resample(y=data.astype(np.float32), orig_sr=fs, target_sr=8000, res_type="scipy")
+        #zero_padding, in order to avoid bug and to have the same shape for all data in lenght time
+        if len(data) > zero_pad: #our data here last 1 second maximun 
+            print(filepath)
+            
+            embedded_data=data[0:zero_pad]
+        elif len(data) < zero_pad:
+            embedded_data = np.zeros(zero_pad)
+            
+            embedded_data[0:len(data)] = data
+            
+        elif len(data) == zero_pad:
+            # nothing to do here
+            embedded_data = data
+            pass
+        Stft=librosa.stft(embedded_data, n_fft=2048,window='hann')
+     
+        Mag,Phase=librosa.core.magphase(Stft, power=1)
+        Phase_l.append(Phase[0:Phase.shape[0]-1,:])
+       
+        Stft=np.log10(abs(Stft)+1)
         
+        #log amp for better learning of the neural network
+        #+1 to avoid log(0.0)
+        
+        Spec_l.append(np.reshape(Stft[0:(Stft.shape[0]-1),:],(Stft.shape[0]-1,Stft.shape[1],1))) 
+        
+    return np.asarray(Spec_l),np.asarray(Phase_l)         
         
         
         
