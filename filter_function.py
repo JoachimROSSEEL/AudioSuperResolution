@@ -35,7 +35,7 @@ def filtrage(b,a,x):
 
 # b, a are the parameters of the digital filter
 #Inspire from preprocess_data of audioMNIST
-def filter_path(src,dst,b,a):
+def filter_path(src,dst,b,a,windows=True):
         
     if not os.path.exists(dst):
           os.makedirs(dst)
@@ -51,9 +51,10 @@ def filter_path(src,dst,b,a):
         y=filtrage(b,a,x)
         
         # infer sample info from name
-        dig, nom, essai = filepath.rstrip(".wav").split("\\")[-1].split("_")
-       
-     
+        if windows=True:
+            dig, nom, essai = filepath.rstrip(".wav").split("\\")[-1].split("_")
+        if windows=False
+            dig, nom, essai = filepath.rstrip(".wav").split("/")[-1].split("_")
         #storing
         wav_file=os.path.join(dst,'{}_{}_{}.wav'.format(dig,nom,essai))
         soundfile.write(wav_file,y,sr)
