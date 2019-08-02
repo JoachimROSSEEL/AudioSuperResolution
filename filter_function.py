@@ -51,9 +51,9 @@ def filter_path(src,dst,b,a,windows=True):
         y=filtrage(b,a,x)
         
         # infer sample info from name
-        if windows=True:
+        if windows==True:
             dig, nom, essai = filepath.rstrip(".wav").split("\\")[-1].split("_")
-        if windows=False
+        if windows==False:
             dig, nom, essai = filepath.rstrip(".wav").split("/")[-1].split("_")
         #storing
         wav_file=os.path.join(dst,'{}_{}_{}.wav'.format(dig,nom,essai))
