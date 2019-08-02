@@ -1,0 +1,10 @@
+librosa==0.6.3
+numpy=1.16.3
+matplotlib=3.0.3
+keras-gpu==2.2.4
+keras-base==2.2.4
+keras-applications==1.0.7
+scipy==1.2.1
+python-sounddevice==0.3.13
+ipython==7.5.0
+scikit-learn==0.20.3
