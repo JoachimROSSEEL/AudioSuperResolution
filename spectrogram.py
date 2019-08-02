@@ -8,8 +8,8 @@ import sys
 import scipy.io.wavfile as wavf
 import scipy.signal
 import librosa
-import multiprocessing
-import argparse
+
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
